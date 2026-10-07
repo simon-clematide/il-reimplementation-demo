@@ -8,7 +8,7 @@ sdk_version: 5.48.0
 app_file: app.py
 pinned: false
 license: cc-by-sa-4.0
-short_description: Multilingual morphological inflection with neural transducers
+short_description: Multilingual inflection with neural transducers
 ---
 
 # Neural Transducer: Morphological Inflection Demo
