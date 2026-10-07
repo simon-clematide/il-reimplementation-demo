@@ -1,0 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+huggingface_hub
+gradio>=5.48
+neural_transducer @ git+https://github.com/simon-clematide/il-reimplementation.git@f71833192acd505bc1d3ba47d75798cfb778fc3d

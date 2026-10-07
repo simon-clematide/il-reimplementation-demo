@@ -1,0 +1,86 @@
+[
+  {
+    "language": "English",
+    "iso": "eng",
+    "lemma": "walk",
+    "features": "V;PST",
+    "description": "Regular weak verb (suffixation: walked)"
+  },
+  {
+    "language": "English",
+    "iso": "eng",
+    "lemma": "sing",
+    "features": "V;PST",
+    "description": "Irregular strong verb (ablaut: sang)"
+  },
+  {
+    "language": "English",
+    "iso": "eng",
+    "lemma": "run",
+    "features": "V;V.PTCP;PRS",
+    "description": "Present participle with consonant gemination (running)"
+  },
+  {
+    "language": "German",
+    "iso": "deu",
+    "lemma": "fallen",
+    "features": "V;IND;PRS;3;SG",
+    "description": "Stem vowel umlaut alternation (fällt)"
+  },
+  {
+    "language": "German",
+    "iso": "deu",
+    "lemma": "beobachten",
+    "features": "V;IND;PST;1;PL",
+    "description": "Past tense plural suffixation (beobachteten)"
+  },
+  {
+    "language": "German",
+    "iso": "deu",
+    "lemma": "spielen",
+    "features": "V;NFIN",
+    "description": "Infinitive form (spielen)"
+  },
+  {
+    "language": "French",
+    "iso": "fra",
+    "lemma": "manger",
+    "features": "V;IND;PRS;1;PL",
+    "description": "First person plural present (mangeons)"
+  },
+  {
+    "language": "French",
+    "iso": "fra",
+    "lemma": "finir",
+    "features": "V;IND;FUT;3;SG",
+    "description": "Future tense suffixation (finira)"
+  },
+  {
+    "language": "French",
+    "iso": "fra",
+    "lemma": "vouloir",
+    "features": "V;IND;PRS;3;SG",
+    "description": "Irregular root alternation (veut)"
+  },
+  {
+    "language": "Italian",
+    "iso": "ita",
+    "lemma": "parlare",
+    "features": "V;IND;FUT;1;SG",
+    "description": "Future tense inflection (parlerò)"
+  },
+  {
+    "language": "Italian",
+    "iso": "ita",
+    "lemma": "vedere",
+    "features": "V;IND;PST;3;SG",
+    "description": "Remote past / passato remoto (vide)"
+  },
+  {
+    "language": "Italian",
+    "iso": "ita",
+    "lemma": "dormire",
+    "features": "V;IND;PRS;2;PL",
+    "description": "Second person plural present (dormite)"
+  }
+]

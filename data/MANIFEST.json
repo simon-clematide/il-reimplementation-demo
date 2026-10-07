@@ -1,0 +1,151 @@
+{
+  "base_url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8",
+  "commit": "519bb1677a7c747b3863d37069ffd395062288d8",
+  "files": {
+    "deu-dev.tsv": {
+      "language_iso": "deu",
+      "language_name": "german",
+      "line_count": 1000,
+      "sha256": "fdcf14c88f046c2a42933a447c62482c562d76f1fc4f78981ff9b5476fa4ef9a",
+      "source_path": "all/task1/german-dev",
+      "split": "dev",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/german-dev"
+    },
+    "deu-test.tsv": {
+      "language_iso": "deu",
+      "language_name": "german",
+      "line_count": 1000,
+      "sha256": "86ab1032c6e45cdbeb6f786aece5360e0687d338eb065e2d5b3a47d4e6bcbd8f",
+      "source_path": "answers/task1/german-uncovered-test",
+      "split": "test_gold",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/answers/task1/german-uncovered-test"
+    },
+    "deu-train-low.tsv": {
+      "language_iso": "deu",
+      "language_name": "german",
+      "line_count": 100,
+      "sha256": "890965f64621ed96a501b7db68fc75573ecc98fd93212e68d85b016d4ceafb35",
+      "source_path": "all/task1/german-train-low",
+      "split": "train_low",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/german-train-low"
+    },
+    "deu-train-medium.tsv": {
+      "language_iso": "deu",
+      "language_name": "german",
+      "line_count": 1000,
+      "sha256": "bc13a266c7ffe71ff58aa047c430e9e0062bd5e8ae108bffd604a5586e422e73",
+      "source_path": "all/task1/german-train-medium",
+      "split": "train_medium",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/german-train-medium"
+    },
+    "eng-dev.tsv": {
+      "language_iso": "eng",
+      "language_name": "english",
+      "line_count": 1000,
+      "sha256": "10c860546b862493820625fb851040c9c4b3238a27d8c174e3fd3b6368e78615",
+      "source_path": "all/task1/english-dev",
+      "split": "dev",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/english-dev"
+    },
+    "eng-test.tsv": {
+      "language_iso": "eng",
+      "language_name": "english",
+      "line_count": 1000,
+      "sha256": "0f696e1061e5faf9e8796b0b414a98a61e8165de6d8856cf2ce5b0edb1bb82be",
+      "source_path": "answers/task1/english-uncovered-test",
+      "split": "test_gold",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/answers/task1/english-uncovered-test"
+    },
+    "eng-train-low.tsv": {
+      "language_iso": "eng",
+      "language_name": "english",
+      "line_count": 100,
+      "sha256": "1af911fa63c3407fe9d8d8af184c0d2c0659cf0bbd2115e428e582b2cf659aeb",
+      "source_path": "all/task1/english-train-low",
+      "split": "train_low",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/english-train-low"
+    },
+    "eng-train-medium.tsv": {
+      "language_iso": "eng",
+      "language_name": "english",
+      "line_count": 1000,
+      "sha256": "d51ac31f44c81363706f791f34fc84557081a65be93347c2844924875ec83179",
+      "source_path": "all/task1/english-train-medium",
+      "split": "train_medium",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/english-train-medium"
+    },
+    "fra-dev.tsv": {
+      "language_iso": "fra",
+      "language_name": "french",
+      "line_count": 1000,
+      "sha256": "d5d5647385492137cb9eb39a2739169f5d1aa2b72d257436bc31acefebcaea21",
+      "source_path": "all/task1/french-dev",
+      "split": "dev",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/french-dev"
+    },
+    "fra-test.tsv": {
+      "language_iso": "fra",
+      "language_name": "french",
+      "line_count": 1000,
+      "sha256": "bc1dc7592bc42e37ca24edbf2c9f4b324cee0d4518da32723705dbd6d6c7f3ba",
+      "source_path": "answers/task1/french-uncovered-test",
+      "split": "test_gold",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/answers/task1/french-uncovered-test"
+    },
+    "fra-train-low.tsv": {
+      "language_iso": "fra",
+      "language_name": "french",
+      "line_count": 100,
+      "sha256": "f9c6a439ecfdd792814a4442600ead406b6b29e4b481fd2bcce45ce317efbb63",
+      "source_path": "all/task1/french-train-low",
+      "split": "train_low",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/french-train-low"
+    },
+    "fra-train-medium.tsv": {
+      "language_iso": "fra",
+      "language_name": "french",
+      "line_count": 1000,
+      "sha256": "742b5db24a1b11781d4e92230f7ca7fa9059fa818665444e6b06e1a6b8680047",
+      "source_path": "all/task1/french-train-medium",
+      "split": "train_medium",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/french-train-medium"
+    },
+    "ita-dev.tsv": {
+      "language_iso": "ita",
+      "language_name": "italian",
+      "line_count": 1000,
+      "sha256": "6bd02134b55f5230908ab595dd688661b3518f75899616c5138118cd00fd6ea5",
+      "source_path": "all/task1/italian-dev",
+      "split": "dev",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/italian-dev"
+    },
+    "ita-test.tsv": {
+      "language_iso": "ita",
+      "language_name": "italian",
+      "line_count": 1000,
+      "sha256": "41b4003963ee21f443e6a3b57c4353cb9fd1f2bdfe66e19973462863e62e3ac5",
+      "source_path": "answers/task1/italian-uncovered-test",
+      "split": "test_gold",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/answers/task1/italian-uncovered-test"
+    },
+    "ita-train-low.tsv": {
+      "language_iso": "ita",
+      "language_name": "italian",
+      "line_count": 100,
+      "sha256": "08b60cc32acc9d624e1c7fa5f895dd67935396e9225e258f499ecac75e314238",
+      "source_path": "all/task1/italian-train-low",
+      "split": "train_low",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/italian-train-low"
+    },
+    "ita-train-medium.tsv": {
+      "language_iso": "ita",
+      "language_name": "italian",
+      "line_count": 1000,
+      "sha256": "6b3862f355d810b96678707e09d5f5375abbd4b2360ad6052b7ec1364b1ca736",
+      "source_path": "all/task1/italian-train-medium",
+      "split": "train_medium",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/italian-train-medium"
+    }
+  },
+  "repository": "sigmorphon/conll2017"
+}

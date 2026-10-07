@@ -1,0 +1,54 @@
+# Frozen Training Hyperparameters for Morphological Inflection
+
+seed: 42
+encoder:
+  type: "lstm"
+  hidden_dim: 200
+  layers: 1
+  bidirectional: true
+  output_dropout: 0.3
+  output_dropout_type: "locked"
+
+decoder:
+  hidden_dim: 200
+  layers: 1
+  output_feedback_dim: 0
+
+embeddings:
+  char_dim: 100
+  feat_dim: 100
+  action_dim: 100
+
+alignment:
+  sed_em_mode: "damped"
+  sed_em_damping: 0.9
+  sed_em_iterations: 10
+
+imitation_learning:
+  expert_loss: "marginal"
+  expert_temperature: 0.0
+  rollin_prob: 0.0
+
+optimization:
+  optimizer: "adamw"
+  lr: 0.001
+  weight_decay: 0.0
+  scheduler: "reduce_on_plateau"
+  factor: 0.5
+  lrs_patience: 4
+  patience: 20
+  batch_size: 8
+  eval_batch_size: 64
+  loss_reduction: "mean"
+
+epochs:
+  low: 100
+  medium: 60
+
+tokenization:
+  source_separator: "none"
+  target_separator: "none"
+  nfd: false
+
+decoding:
+  beam_width: 0  # 0 disables beam search decoding; greedy decoding is used exclusively

@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+scratch/
+tmp/
+
+# Data & Models (never commit raw data files or weights to git)
+data/raw/
+models/
+*.model
+*.pkl
+*.log
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Environment / IDE
+.DS_Store
+.vscode/
+.idea/
