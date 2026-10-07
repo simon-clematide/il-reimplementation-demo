@@ -80,10 +80,10 @@ def generate_reproducibility_report(root_dir: str, results: list):
         lang, regime = bundle.split("_")
         epoch = res.get("best_epoch", "N/A")
 
-        dev_greedy = res.get("dev_greedy", {}).get("string_accuracy", res.get("dev_string_accuracy", 0.0))
-        dev_sym = res.get("dev_greedy", {}).get("symbol_accuracy", res.get("dev_symbol_accuracy", 0.0))
-        test_greedy = res.get("test_greedy", {}).get("string_accuracy", "N/A")
-        test_sym = res.get("test_greedy", {}).get("symbol_accuracy", "N/A")
+        dev_greedy = res.get("dev_greedy", {}).get("dev_string_accuracy", res.get("dev_string_accuracy", "N/A"))
+        dev_sym = res.get("dev_greedy", {}).get("dev_symbol_accuracy", res.get("dev_symbol_accuracy", "N/A"))
+        test_greedy = res.get("test_greedy", {}).get("test_string_accuracy", "N/A")
+        test_sym = res.get("test_greedy", {}).get("test_symbol_accuracy", "N/A")
 
         model_sha = res.get("files", {}).get("best.model", "")[:12] + "..."
 
