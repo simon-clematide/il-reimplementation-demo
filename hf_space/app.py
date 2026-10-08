@@ -291,7 +291,7 @@ CUSTOM_CSS = """
 }
 """
 
-with gr.Blocks(title="Morphological Inflection") as demo:
+with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
     with gr.Tabs() as tabs:
 
         # ----------------------------------------------------
@@ -463,4 +463,4 @@ with gr.Blocks(title="Morphological Inflection") as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch(theme=gr.themes.Soft(), css=CUSTOM_CSS)
+    demo.launch()
