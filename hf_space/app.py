@@ -215,10 +215,8 @@ def sample_test_and_run(language_label: str):
     )
 
 
-# Documentation markdown constants
-GLOSSARY_MD = """
-### UniMorph Morphological Features
-
+# Documentation markdown sections
+UNIMORPH_DOC_MD = """
 Morphological features in UniMorph are represented as standardized, semicolon-delimited dimensional tags.
 
 | Dimension | Tag | Category | Description & Example |
@@ -247,21 +245,17 @@ Morphological features in UniMorph are represented as standardized, semicolon-de
 | | `DAT` | Dative | Indirect object (*dem Hund*) |
 | | `GEN` | Genitive | Possessive case (*des Hundes*) |
 | **Degree** *(German)* | `POS` | Positive | Base adjective degree (*schön*) |
+"""
 
----
-
-### Model Architecture & Training
-
+ARCHITECTURE_DOC_MD = """
 The models implemented here are **transition-based neural string transducers** following Makarov and Clematide (2020):
 - **Encoder:** Bidirectional LSTM representing character sequences and feature embeddings.
 - **Decoder:** Monotonic transition-based decoder that emits character edit actions: `COPY`, `DELETE`, `INSERT(c)`, and `SUBSTITUTE(c)`.
 - **Training Strategy:** Imitation learning using expert policies derived from Stochastic Edit Distance (SED) alignments.
 - **Decoding Mode:** Greedy decoding (`beam_width = 1`) for clean, deterministic evaluation.
+"""
 
----
-
-### Benchmark Data: CoNLL-SIGMORPHON 2017 Task 1
-
+BENCHMARK_DOC_MD = """
 The models are trained and evaluated on official splits from the CoNLL-SIGMORPHON 2017 Shared Task 1:
 
 | Language | Low-Resource (100) | Medium-Resource (1,000) | Test Set (1,000) |
@@ -411,7 +405,14 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
         # Tab 3: Documentation
         # ----------------------------------------------------
         with gr.Tab("Documentation", id="tab_docs"):
-            gr.Markdown(GLOSSARY_MD)
+            with gr.Accordion("UniMorph Morphological Features", open=False):
+                gr.Markdown(UNIMORPH_DOC_MD)
+
+            with gr.Accordion("Model Architecture & Training", open=False):
+                gr.Markdown(ARCHITECTURE_DOC_MD)
+
+            with gr.Accordion("Benchmark Data: CoNLL-SIGMORPHON 2017 Task 1", open=False):
+                gr.Markdown(BENCHMARK_DOC_MD)
 
     # ----------------------------------------------------
     # Event Bindings
