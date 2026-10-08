@@ -6,6 +6,7 @@ Features:
 - Random sampling from official CoNLL-SIGMORPHON 2017 Dev and Test splits with gold target display
 - Training exposure indicators (Lemma seen? Feature combination seen?) for both regimes
 - Detailed action alignment traces (COPY, DELETE, INSERT, SUBSTITUTE)
+- Interactive morphological feature explainer and full UniMorph tag glossary
 - Curated linguistic examples
 """
 
@@ -28,6 +29,57 @@ LANGUAGE_MAP = {
     "French": "fra",
     "Italian": "ita",
 }
+
+TAG_DEFINITIONS = {
+    # Part of Speech
+    "V": ("Part of Speech", "Verb", "Base action or state word (e.g. sing, gehen, chanter)"),
+    "N": ("Part of Speech", "Noun", "Person, place, thing, or concept (e.g. apple, Apfel)"),
+    # Person
+    "1": ("Person", "1st Person", "Speaker / speaker group (I, we)"),
+    "2": ("Person", "2nd Person", "Addressee (you)"),
+    "3": ("Person", "3rd Person", "Entity spoken about (he, she, it, they)"),
+    # Number
+    "SG": ("Number", "Singular", "Single entity (e.g. book)"),
+    "PL": ("Number", "Plural", "Multiple entities (e.g. books)"),
+    # Tense & Aspect
+    "PRS": ("Tense", "Present", "Action happening currently (e.g. walks)"),
+    "PST": ("Tense", "Past", "Action that occurred previously (e.g. walked)"),
+    "FUT": ("Tense", "Future", "Action that will occur (e.g. ira in French)"),
+    "IPFV": ("Aspect", "Imperfect / Imperfective", "Ongoing, habitual, or continuous past action (e.g. cantava in Italian)"),
+    "PFV": ("Aspect", "Perfective", "Completed action / past historic / passé simple (e.g. chanta in French)"),
+    # Mood & Finiteness
+    "IND": ("Mood", "Indicative", "Objective statement of fact"),
+    "SBJV": ("Mood", "Subjunctive", "Hypothetical, doubt, wish, or dependent clause"),
+    "COND": ("Mood", "Conditional", "Action dependent on condition (would/should)"),
+    "IMP": ("Mood", "Imperative", "Direct command or request (e.g. Listen!)"),
+    "NFIN": ("Finiteness", "Infinitive / Non-finite", "Uninflected base dictionary form (e.g. to walk)"),
+    "V.PTCP": ("Finiteness", "Participle", "Verbal adjective (e.g. broken, singing)"),
+    "V.CVB": ("Finiteness", "Converb / Gerund", "Verbal adverb (e.g. cantando in Italian)"),
+    # Case (German)
+    "NOM": ("Case", "Nominative", "Subject of the sentence"),
+    "ACC": ("Case", "Accusative", "Direct object of transitive verb"),
+    "DAT": ("Case", "Dative", "Indirect object"),
+    "GEN": ("Case", "Genitive", "Possessive / relationship of source"),
+    # Degree (German)
+    "POS": ("Degree", "Positive", "Base degree of adjective/adverb (e.g. schön)"),
+}
+
+
+def explain_features(features_str):
+    if not features_str or not features_str.strip():
+        return "*Enter feature tags above to see their breakdown.*"
+    tags = [t.strip() for t in features_str.strip().split(";") if t.strip()]
+    if not tags:
+        return "*No valid tags provided.*"
+
+    items = []
+    for t in tags:
+        if t in TAG_DEFINITIONS:
+            category, name, desc = TAG_DEFINITIONS[t]
+            items.append(f"- **`{t}`** ({category}: *{name}*) – {desc}")
+        else:
+            items.append(f"- **`{t}`** – *Unknown / custom tag*")
+    return "\n".join(items)
 
 
 def format_action_trace(trace):
@@ -61,6 +113,8 @@ def build_coverage_markdown(lang_iso, lemma, features_str):
 
 
 def inflect(language_label, mode, lemma, features_str, gold_target=""):
+    feat_explanation = explain_features(features_str)
+
     if not lemma or not features_str:
         return (
             "Please provide both a lemma and UniMorph features.",
@@ -69,6 +123,7 @@ def inflect(language_label, mode, lemma, features_str, gold_target=""):
             "Waiting for valid input...",
             "",
             "",
+            feat_explanation,
         )
 
     iso = LANGUAGE_MAP.get(language_label, "eng")
@@ -104,7 +159,7 @@ def inflect(language_label, mode, lemma, features_str, gold_target=""):
             if res_1000.unknown_features:
                 warn = f"⚠️ Unseen individual tag tokens (treated as UNK): {', '.join(res_1000.unknown_features)}"
 
-            return pred_100, score_100, pred_1000, score_1000, trace_text, warn, cov_md
+            return pred_100, score_100, pred_1000, score_1000, trace_text, warn, cov_md, feat_explanation
 
         elif mode == "100 Examples (Low-Resource)":
             res = engine.predict(iso, "100", lemma, features_str, beam_width=1)
@@ -112,7 +167,7 @@ def inflect(language_label, mode, lemma, features_str, gold_target=""):
             if gold_target:
                 pred += " ✅ Match" if pred == gold_target else " ❌ Mismatch"
             warn = f"⚠️ Unseen individual tag tokens: {', '.join(res.unknown_features)}" if res.unknown_features else ""
-            return pred, f"{res.decoder_score:.4f}", "-", "-", format_action_trace(res.action_trace), warn, cov_md
+            return pred, f"{res.decoder_score:.4f}", "-", "-", format_action_trace(res.action_trace), warn, cov_md, feat_explanation
 
         else:  # 1000 Examples
             res = engine.predict(iso, "1000", lemma, features_str, beam_width=1)
@@ -120,19 +175,53 @@ def inflect(language_label, mode, lemma, features_str, gold_target=""):
             if gold_target:
                 pred += " ✅ Match" if pred == gold_target else " ❌ Mismatch"
             warn = f"⚠️ Unseen individual tag tokens: {', '.join(res.unknown_features)}" if res.unknown_features else ""
-            return "-", "-", pred, f"{res.decoder_score:.4f}", format_action_trace(res.action_trace), warn, cov_md
+            return "-", "-", pred, f"{res.decoder_score:.4f}", format_action_trace(res.action_trace), warn, cov_md, feat_explanation
 
     except Exception as e:
-        return f"Error: {e}", "-", "-", "-", str(e), "", cov_md
+        return f"Error: {e}", "-", "-", "-", str(e), "", cov_md, feat_explanation
 
 
 def sample_random_item(language_label, split_choice):
     iso = LANGUAGE_MAP.get(language_label, "eng")
     sample = engine.get_random_sample(iso, split=split_choice)
     if not sample:
-        return "sing", "V;PST", "", "No samples available."
-    return sample["lemma"], sample["features"], sample["target"]
+        return "sing", "V;PST", "", explain_features("V;PST")
+    return sample["lemma"], sample["features"], sample["target"], explain_features(sample["features"])
 
+
+# Build markdown glossary table
+GLOSSARY_MD = """
+### 📖 UniMorph Tag Reference Guide
+
+UniMorph tags represent morphological properties as standardized, semicolon-delimited dimensional feature bundles.
+
+| Dimension | Tag | Name | Description & Example |
+| :--- | :--- | :--- | :--- |
+| **Part of Speech** | `V` | Verb | Action/state: *sing*, *jump*, *be* |
+| | `N` | Noun | Entity: *apple*, *dog*, *water* |
+| **Person** | `1` | 1st Person | Speaker (*I, we*) |
+| | `2` | 2nd Person | Addressee (*you*) |
+| | `3` | 3rd Person | Spoken about (*he, she, it, they*) |
+| **Number** | `SG` | Singular | Single item (*child*) |
+| | `PL` | Plural | Multiple items (*children*) |
+| **Tense & Aspect** | `PRS` | Present | Present time (*walks*) |
+| | `PST` | Past | Past time (*walked*, *sang*) |
+| | `FUT` | Future | Future time (*ira* in French) |
+| | `IPFV` | Imperfective | Ongoing past (*cantava* in Italian, *chantait* in French) |
+| | `PFV` | Perfective | Completed past / Passé simple / Past historic (*cantò*, *chanta*) |
+| **Mood & Finiteness** | `IND` | Indicative | Real fact or statement (*he goes*) |
+| | `SBJV` | Subjunctive | Hypothetical, doubt, necessity (*chante*, *singe*) |
+| | `COND` | Conditional | Conditional mood (*would sing*, *chanterait*) |
+| | `IMP` | Imperative | Direct command (*Go!*) |
+| | `NFIN` | Non-finite / Infinitive | Base dictionary infinitive form (*to go*) |
+| | `V.PTCP` | Participle | Verbal adjective (*eaten*, *walking*) |
+| | `V.CVB` | Converb / Gerund | Verbal adverb (*cantando* in Italian) |
+| **Case** *(German)* | `NOM` | Nominative | Subject of clause (*der Hund*) |
+| | `ACC` | Accusative | Direct object (*den Hund*) |
+| | `DAT` | Dative | Indirect object (*dem Hund*) |
+| | `GEN` | Genitive | Possessive case (*des Hundes*) |
+| **Degree** *(German)* | `POS` | Positive | Base adjective degree (*schön*) |
+"""
 
 # Gradio UI definition
 with gr.Blocks(title="Neural Transducer: Morphological Inflection", theme=gr.themes.Soft()) as demo:
@@ -183,6 +272,10 @@ with gr.Blocks(title="Neural Transducer: Morphological Inflection", theme=gr.the
                 value="",
             )
 
+            with gr.Group():
+                gr.Markdown("#### ℹ️ Feature Breakdown")
+                feat_explanation_box = gr.Markdown(explain_features("V;PST"))
+
             run_btn = gr.Button("Generate Inflection", variant="primary")
 
         with gr.Column(scale=1):
@@ -204,6 +297,9 @@ with gr.Blocks(title="Neural Transducer: Morphological Inflection", theme=gr.the
             with gr.Accordion("🔍 Transducer Edit Action Trace (Alignment Steps)", open=False):
                 trace_box = gr.Code(label="Action Sequence", language="markdown", interactive=False)
 
+            with gr.Accordion("📚 UniMorph Feature Tag Glossary & Help", open=False):
+                gr.Markdown(GLOSSARY_MD)
+
     gr.Markdown("### 💡 Click an Example to Load")
     example_rows = []
     for ex in CURATED_EXAMPLES:
@@ -212,25 +308,31 @@ with gr.Blocks(title="Neural Transducer: Morphological Inflection", theme=gr.the
     gr.Examples(
         examples=example_rows,
         inputs=[lang_dropdown, mode_radio, lemma_input, feat_input, gold_target_input],
-        outputs=[out_100, score_100, out_1000, score_1000, trace_box, warning_box, coverage_box],
+        outputs=[out_100, score_100, out_1000, score_1000, trace_box, warning_box, coverage_box, feat_explanation_box],
         fn=inflect,
         cache_examples=False,
+    )
+
+    feat_input.change(
+        fn=explain_features,
+        inputs=[feat_input],
+        outputs=[feat_explanation_box],
     )
 
     sample_btn.click(
         fn=sample_random_item,
         inputs=[lang_dropdown, split_selector],
-        outputs=[lemma_input, feat_input, gold_target_input],
+        outputs=[lemma_input, feat_input, gold_target_input, feat_explanation_box],
     ).then(
         fn=inflect,
         inputs=[lang_dropdown, mode_radio, lemma_input, feat_input, gold_target_input],
-        outputs=[out_100, score_100, out_1000, score_1000, trace_box, warning_box, coverage_box],
+        outputs=[out_100, score_100, out_1000, score_1000, trace_box, warning_box, coverage_box, feat_explanation_box],
     )
 
     run_btn.click(
         fn=inflect,
         inputs=[lang_dropdown, mode_radio, lemma_input, feat_input, gold_target_input],
-        outputs=[out_100, score_100, out_1000, score_1000, trace_box, warning_box, coverage_box],
+        outputs=[out_100, score_100, out_1000, score_1000, trace_box, warning_box, coverage_box, feat_explanation_box],
     )
 
 if __name__ == "__main__":
