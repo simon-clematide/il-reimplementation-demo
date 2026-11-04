@@ -30,21 +30,25 @@ DATASET_LINKS = {
     "English": {
         "train_100": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-low",
         "train_1000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-medium",
+        "train_10000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-high",
         "test": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-uncovered-test",
     },
     "German": {
         "train_100": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-low",
         "train_1000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-medium",
+        "train_10000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-high",
         "test": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-uncovered-test",
     },
     "French": {
         "train_100": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-low",
         "train_1000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-medium",
+        "train_10000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-high",
         "test": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-uncovered-test",
     },
     "Italian": {
         "train_100": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-low",
         "train_1000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-medium",
+        "train_10000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-high",
         "test": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-uncovered-test",
     },
 }
@@ -110,27 +114,31 @@ def build_coverage_markdown(lang_iso: str, lemma: str, features_str: str) -> str
     if not lemma or not features_str:
         return ""
     cov = engine.check_training_coverage(lang_iso, lemma, features_str)
-    low_lemma = "Observed" if cov["100"]["lemma_seen"] else "Unseen in training"
-    med_lemma = "Observed" if cov["1000"]["lemma_seen"] else "Unseen in training"
+    low_lemma = "Observed" if cov.get("100", {}).get("lemma_seen") else "Unseen in training"
+    med_lemma = "Observed" if cov.get("1000", {}).get("lemma_seen") else "Unseen in training"
+    high_lemma = "Observed" if cov.get("10000", {}).get("lemma_seen") else "Unseen in training"
 
-    low_feat = "Observed" if cov["100"]["features_seen"] else "Unseen combination"
-    med_feat = "Observed" if cov["1000"]["features_seen"] else "Unseen combination"
+    low_feat = "Observed" if cov.get("100", {}).get("features_seen") else "Unseen combination"
+    med_feat = "Observed" if cov.get("1000", {}).get("features_seen") else "Unseen combination"
+    high_feat = "Observed" if cov.get("10000", {}).get("features_seen") else "Unseen combination"
 
     md = f"""
-| Input Element | 100 Examples (Low-Resource) | 1,000 Examples (Medium-Resource) |
-| :--- | :--- | :--- |
-| **Lemma** (`{lemma}`) | {low_lemma} | {med_lemma} |
-| **Features** (`{features_str}`) | {low_feat} | {med_feat} |
+| Input Element | 100 Examples (Low) | 1,000 Examples (Medium) | 10,000 Examples (High) |
+| :--- | :--- | :--- | :--- |
+| **Lemma** (`{lemma}`) | {low_lemma} | {med_lemma} | {high_lemma} |
+| **Features** (`{features_str}`) | {low_feat} | {med_feat} | {high_feat} |
 """
     return md.strip()
 
 
 def run_experiment(language_label: str, lemma: str, features_str: str, gold_target: str = ""):
-    """Runs prediction for both 100 and 1,000 regimes, comparing against gold target if provided."""
+    """Runs prediction for 100, 1,000, and 10,000 regimes, comparing against gold target if provided."""
     inline_desc = explain_features_inline(features_str)
 
     if not lemma or not features_str:
         return (
+            "Please provide a lemma and features.",
+            "",
             "Please provide a lemma and features.",
             "",
             "Please provide a lemma and features.",
@@ -150,19 +158,24 @@ def run_experiment(language_label: str, lemma: str, features_str: str, gold_targ
     try:
         res_100 = engine.predict(iso, "100", lemma, features_str, beam_width=1)
         res_1000 = engine.predict(iso, "1000", lemma, features_str, beam_width=1)
+        res_10000 = engine.predict(iso, "10000", lemma, features_str, beam_width=1)
 
         pred_100 = res_100.predicted_form
         pred_1000 = res_1000.predicted_form
+        pred_10000 = res_10000.predicted_form
 
         status_100 = ""
         status_1000 = ""
+        status_10000 = ""
         if gold_target:
             status_100 = "Match" if pred_100 == gold_target else "Mismatch"
             status_1000 = "Match" if pred_1000 == gold_target else "Mismatch"
+            status_10000 = "Match" if pred_10000 == gold_target else "Mismatch"
 
         trace_text = (
             f"=== 100 Examples ===\n{format_action_trace(res_100.action_trace)}\n\n"
-            f"=== 1,000 Examples ===\n{format_action_trace(res_1000.action_trace)}"
+            f"=== 1,000 Examples ===\n{format_action_trace(res_1000.action_trace)}\n\n"
+            f"=== 10,000 Examples ===\n{format_action_trace(res_10000.action_trace)}"
         )
 
         return (
@@ -170,12 +183,16 @@ def run_experiment(language_label: str, lemma: str, features_str: str, gold_targ
             status_100,
             pred_1000,
             status_1000,
+            pred_10000,
+            status_10000,
             cov_md,
             trace_text,
             inline_desc,
         )
     except Exception as e:
         return (
+            f"Error: {e}",
+            "",
             f"Error: {e}",
             "",
             f"Error: {e}",
@@ -191,13 +208,13 @@ def sample_test_and_run(language_label: str):
     iso = LANGUAGE_MAP.get(language_label, "eng")
     sample = engine.get_random_sample(iso, split="test")
     if not sample:
-        return "sing", "V;PST", "", "", "", "", "", "", "No test samples available.", "Verb · Past"
+        return "sing", "V;PST", "", "", "", "", "", "", "", "", "No test samples available.", "Verb · Past"
 
     lemma = sample["lemma"]
     features_str = sample["features"]
     gold_target = sample["target"]
 
-    pred_100, stat_100, pred_1000, stat_1000, cov_md, trace_text, inline_desc = run_experiment(
+    pred_100, stat_100, pred_1000, stat_1000, pred_10000, stat_10000, cov_md, trace_text, inline_desc = run_experiment(
         language_label, lemma, features_str, gold_target
     )
 
@@ -209,6 +226,8 @@ def sample_test_and_run(language_label: str):
         stat_100,
         pred_1000,
         stat_1000,
+        pred_10000,
+        stat_10000,
         cov_md,
         trace_text,
         inline_desc,
@@ -258,12 +277,12 @@ The models implemented here are **transition-based neural string transducers** f
 BENCHMARK_DOC_MD = """
 The models are trained and evaluated on official splits from the CoNLL-SIGMORPHON 2017 Shared Task 1:
 
-| Language | Low-Resource (100) | Medium-Resource (1,000) | Test Set (1,000) |
-| :--- | :--- | :--- | :--- |
-| **English** | [english-train-low](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-low) | [english-train-medium](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-medium) | [english-uncovered-test](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-uncovered-test) |
-| **German** | [german-train-low](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-low) | [german-train-medium](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-medium) | [german-uncovered-test](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-uncovered-test) |
-| **French** | [french-train-low](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-low) | [french-train-medium](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-medium) | [french-uncovered-test](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-uncovered-test) |
-| **Italian** | [italian-train-low](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-low) | [italian-train-medium](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-medium) | [italian-uncovered-test](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-uncovered-test) |
+| Language | Low-Resource (100) | Medium-Resource (1,000) | High-Resource (10,000) | Test Set (1,000) |
+| :--- | :--- | :--- | :--- | :--- |
+| **English** | [english-train-low](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-low) | [english-train-medium](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-medium) | [english-train-high](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-high) | [english-uncovered-test](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-uncovered-test) |
+| **German** | [german-train-low](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-low) | [german-train-medium](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-medium) | [german-train-high](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-high) | [german-uncovered-test](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-uncovered-test) |
+| **French** | [french-train-low](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-low) | [french-train-medium](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-medium) | [french-train-high](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-high) | [french-uncovered-test](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-uncovered-test) |
+| **Italian** | [italian-train-low](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-low) | [italian-train-medium](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-medium) | [italian-train-high](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-high) | [italian-uncovered-test](https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-uncovered-test) |
 """
 
 
@@ -295,9 +314,9 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
             gr.Markdown(
                 """
                 # Morphological Inflection
-                What happens when a neural transducer learns morphology from **100 examples** rather than **1,000**?
+                What happens when a neural transducer learns morphology from **100**, **1,000**, or **10,000 examples**?
 
-                This demonstrator investigates how transition-based neural string transducers (Makarov & Clematide, 2020) generalize morphological inflection across four European languages under low-resource versus medium-resource supervision.
+                This demonstrator investigates how transition-based neural string transducers (Makarov & Clematide, 2020) generalize morphological inflection across four European languages under low-, medium-, and high-resource supervision.
                 """
             )
 
@@ -305,7 +324,7 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
                 with gr.Column(elem_classes=["overview-card"]):
                     gr.Markdown("### Explore\nGenerate inflected forms across English, German, French, and Italian from lemma and feature inputs.")
                 with gr.Column(elem_classes=["overview-card"]):
-                    gr.Markdown("### Compare\nExamine side-by-side predictions from models trained on 100 versus 1,000 examples.")
+                    gr.Markdown("### Compare\nExamine side-by-side predictions across low (100), medium (1,000), and high (10,000) supervision regimes.")
                 with gr.Column(elem_classes=["overview-card"]):
                     gr.Markdown("### Understand\nInspect whether inputs were observed during training and how edit actions construct the output.")
 
@@ -373,11 +392,14 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
             gr.Markdown("### Results")
             with gr.Row():
                 with gr.Column():
-                    out_100 = gr.Textbox(label="100 Examples (Low-Resource)", interactive=False)
+                    out_100 = gr.Textbox(label="100 Examples (Low)", interactive=False)
                     stat_100 = gr.Textbox(label="Status (100)", show_label=False, interactive=False)
                 with gr.Column():
-                    out_1000 = gr.Textbox(label="1,000 Examples (Medium-Resource)", interactive=False)
+                    out_1000 = gr.Textbox(label="1,000 Examples (Medium)", interactive=False)
                     stat_1000 = gr.Textbox(label="Status (1,000)", show_label=False, interactive=False)
+                with gr.Column():
+                    out_10000 = gr.Textbox(label="10,000 Examples (High)", interactive=False)
+                    stat_10000 = gr.Textbox(label="Status (10,000)", show_label=False, interactive=False)
 
             with gr.Accordion("Training Data Exposure", open=False):
                 coverage_box = gr.Markdown(
@@ -396,7 +418,7 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
             gr.Examples(
                 examples=example_rows,
                 inputs=[lang_dropdown, lemma_input, feat_input, gold_target_input],
-                outputs=[out_100, stat_100, out_1000, stat_1000, coverage_box, trace_box, feat_inline_desc],
+                outputs=[out_100, stat_100, out_1000, stat_1000, out_10000, stat_10000, coverage_box, trace_box, feat_inline_desc],
                 fn=run_experiment,
                 cache_examples=False,
             )
@@ -442,6 +464,8 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
             stat_100,
             out_1000,
             stat_1000,
+            out_10000,
+            stat_10000,
             coverage_box,
             trace_box,
             feat_inline_desc,
@@ -457,6 +481,8 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
             stat_100,
             out_1000,
             stat_1000,
+            out_10000,
+            stat_10000,
             coverage_box,
             trace_box,
             feat_inline_desc,

@@ -11,7 +11,7 @@ from huggingface_hub import HfApi
 
 HF_MODEL_REPO = "simon-clmtd/neural-transducer-inflection"
 LANGUAGES = ["eng", "deu", "fra", "ita"]
-REGIMES = ["100", "1000"]
+REGIMES = ["100", "1000", "10000"]
 
 
 def upload_models(repo_id: str = HF_MODEL_REPO, revision: str = "main"):

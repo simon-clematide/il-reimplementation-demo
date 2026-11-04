@@ -13,7 +13,7 @@ import sys
 import torch
 
 LANGUAGES = ["eng", "deu", "fra", "ita"]
-REGIMES = ["100", "1000"]
+REGIMES = ["100", "1000", "10000"]
 
 
 def train_all(device: str = None):

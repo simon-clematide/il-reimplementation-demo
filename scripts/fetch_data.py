@@ -25,6 +25,7 @@ LANGUAGES = {
 SPLIT_FILES = {
     "train_low": ("all/task1/{lang}-train-low", "{iso}-train-low.tsv"),
     "train_medium": ("all/task1/{lang}-train-medium", "{iso}-train-medium.tsv"),
+    "train_high": ("all/task1/{lang}-train-high", "{iso}-train-high.tsv"),
     "dev": ("all/task1/{lang}-dev", "{iso}-dev.tsv"),
     "test_gold": ("answers/task1/{lang}-uncovered-test", "{iso}-test.tsv"),
 }

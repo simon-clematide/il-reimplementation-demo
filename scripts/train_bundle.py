@@ -35,8 +35,11 @@ def train_bundle(lang_iso: str, regime: str, device: str = None):
     elif regime == "1000":
         train_file = os.path.join(raw_data_dir, f"{lang_iso}-train-medium.tsv")
         epochs = cfg["epochs"]["medium"]
+    elif regime == "10000":
+        train_file = os.path.join(raw_data_dir, f"{lang_iso}-train-high.tsv")
+        epochs = cfg["epochs"]["high"]
     else:
-        raise ValueError(f"Unknown regime: {regime}. Must be '100' or '1000'.")
+        raise ValueError(f"Unknown regime: {regime}. Must be '100', '1000', or '10000'.")
 
     dev_file = os.path.join(raw_data_dir, f"{lang_iso}-dev.tsv")
     test_file = os.path.join(raw_data_dir, f"{lang_iso}-test.tsv")
@@ -93,7 +96,7 @@ def train_bundle(lang_iso: str, regime: str, device: str = None):
 def main():
     parser = argparse.ArgumentParser(description="Train a single Transducer bundle.")
     parser.add_argument("--lang", required=True, choices=["eng", "deu", "fra", "ita"], help="Language code")
-    parser.add_argument("--regime", required=True, choices=["100", "1000"], help="Training data size")
+    parser.add_argument("--regime", required=True, choices=["100", "1000", "10000"], help="Training data size")
     parser.add_argument("--device", default=None, help="Device (mps/cpu/cuda)")
     args = parser.parse_args()
     train_bundle(args.lang, args.regime, args.device)

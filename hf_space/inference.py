@@ -26,7 +26,7 @@ class TransducerSpaceEngine:
         self.local_dir = local_dir
         self._cache: Dict[str, Tuple] = {}
         self._cache_order: List[str] = []
-        self.max_cache_size = 2
+        self.max_cache_size = 3
         self.device = "cpu"  # Space runs on cpu-basic
 
     def _resolve_bundle_path(self, bundle_name: str) -> str:
@@ -113,7 +113,7 @@ class TransducerSpaceEngine:
         features_norm = set(features_str.strip().split(";"))
 
         result = {}
-        for regime in ["100", "1000"]:
+        for regime in ["100", "1000", "10000"]:
             cov = lang_data.get(regime, {})
             seen_lemmas = set(cov.get("lemmas", []))
             raw_feats = cov.get("features", [])

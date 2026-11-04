@@ -44,6 +44,7 @@ optimization:
 epochs:
   low: 100
   medium: 60
+  high: 40
 
 tokenization:
   source_separator: "none"

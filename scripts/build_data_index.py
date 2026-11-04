@@ -37,6 +37,7 @@ def build_index():
     for lang in LANGUAGES:
         low_items = load_tsv(DATA_RAW / f"{lang}-train-low.tsv")
         med_items = load_tsv(DATA_RAW / f"{lang}-train-medium.tsv")
+        high_items = load_tsv(DATA_RAW / f"{lang}-train-high.tsv")
         dev_items = load_tsv(DATA_RAW / f"{lang}-dev.tsv")
         test_items = load_tsv(DATA_RAW / f"{lang}-test.tsv")
 
@@ -49,6 +50,10 @@ def build_index():
                 "1000": {
                     "lemmas": sorted(list({x["lemma"] for x in med_items})),
                     "features": sorted(list({x["features"] for x in med_items})),
+                },
+                "10000": {
+                    "lemmas": sorted(list({x["lemma"] for x in high_items})),
+                    "features": sorted(list({x["features"] for x in high_items})),
                 },
             },
             "dev": dev_items,

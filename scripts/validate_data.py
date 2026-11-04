@@ -103,49 +103,56 @@ def validate():
     for iso in languages:
         low_file = f"{iso}-train-low.tsv"
         med_file = f"{iso}-train-medium.tsv"
+        high_file = f"{iso}-train-high.tsv"
         dev_file = f"{iso}-dev.tsv"
         test_file = f"{iso}-test.tsv"
 
         low_rows = data[low_file]
         med_rows = data[med_file]
+        high_rows = data[high_file]
         dev_rows = data[dev_file]
         test_rows = data[test_file]
 
         low_triples = set(r["triple"] for r in low_rows)
         med_triples = set(r["triple"] for r in med_rows)
+        high_triples = set(r["triple"] for r in high_rows)
         dev_triples = set(r["triple"] for r in dev_rows)
         test_triples = set(r["triple"] for r in test_rows)
 
         low_lemmas = set(r["lemma"] for r in low_rows)
         med_lemmas = set(r["lemma"] for r in med_rows)
+        high_lemmas = set(r["lemma"] for r in high_rows)
         dev_lemmas = set(r["lemma"] for r in dev_rows)
         test_lemmas = set(r["lemma"] for r in test_rows)
 
-        # Check train-low in train-medium
+        # Check train-low in train-medium in train-high
         low_in_med = low_triples.intersection(med_triples)
-        is_subset = low_triples.issubset(med_triples)
+        is_low_in_med = low_triples.issubset(med_triples)
+        med_in_high = med_triples.intersection(high_triples)
+        is_med_in_high = med_triples.issubset(high_triples)
 
         # Leakage
-        leak_dev_med = med_triples.intersection(dev_triples)
-        leak_test_med = med_triples.intersection(test_triples)
+        leak_dev_high = high_triples.intersection(dev_triples)
+        leak_test_high = high_triples.intersection(test_triples)
         leak_test_dev = dev_triples.intersection(test_triples)
 
-        lemma_overlap_dev = med_lemmas.intersection(dev_lemmas)
-        lemma_overlap_test = med_lemmas.intersection(test_lemmas)
+        lemma_overlap_dev = high_lemmas.intersection(dev_lemmas)
+        lemma_overlap_test = high_lemmas.intersection(test_lemmas)
 
         print(f"Language: {iso.upper()}")
-        print(f"  train-low in train-medium : {len(low_in_med)}/100 (is strict subset: {is_subset})")
-        print(f"  Exact triple leakage     : train∩dev = {len(leak_dev_med)}, train∩test = {len(leak_test_med)}, dev∩test = {len(leak_test_dev)}")
-        print(f"  Lemma overlap (medium)    : with dev = {len(lemma_overlap_dev)}/{len(med_lemmas)}, with test = {len(lemma_overlap_test)}/{len(med_lemmas)}")
+        print(f"  train-low in train-medium : {len(low_in_med)}/100 (is strict subset: {is_low_in_med})")
+        print(f"  train-medium in train-high: {len(med_in_high)}/1000 (is strict subset: {is_med_in_high})")
+        print(f"  Exact triple leakage     : train_high∩dev = {len(leak_dev_high)}, train_high∩test = {len(leak_test_high)}, dev∩test = {len(leak_test_dev)}")
+        print(f"  Lemma overlap (high)      : with dev = {len(lemma_overlap_dev)}/{len(high_lemmas)}, with test = {len(lemma_overlap_test)}/{len(high_lemmas)}")
 
         # Features inventory & OOV tags
-        train_tags = set().union(*(r["tags"] for r in med_rows))
+        train_tags = set().union(*(r["tags"] for r in high_rows))
         dev_tags = set().union(*(r["tags"] for r in dev_rows))
         test_tags = set().union(*(r["tags"] for r in test_rows))
 
         unk_dev_tags = dev_tags - train_tags
         unk_test_tags = test_tags - train_tags
-        print(f"  Total unique UniMorph tags in train-medium : {len(train_tags)}")
+        print(f"  Total unique UniMorph tags in train-high : {len(train_tags)}")
         print(f"  Unseen tags in dev  : {len(unk_dev_tags)} ({', '.join(sorted(unk_dev_tags)) if unk_dev_tags else 'None'})")
         print(f"  Unseen tags in test : {len(unk_test_tags)} ({', '.join(sorted(unk_test_tags)) if unk_test_tags else 'None'})")
         print()

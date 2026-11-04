@@ -20,6 +20,15 @@
       "split": "test_gold",
       "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/answers/task1/german-uncovered-test"
     },
+    "deu-train-high.tsv": {
+      "language_iso": "deu",
+      "language_name": "german",
+      "line_count": 10000,
+      "sha256": "765e7fa395d3fe4267f17c0e644cec3b3c480fc7a5b9f67bc7a13febec60b594",
+      "source_path": "all/task1/german-train-high",
+      "split": "train_high",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/german-train-high"
+    },
     "deu-train-low.tsv": {
       "language_iso": "deu",
       "language_name": "german",
@@ -55,6 +64,15 @@
       "source_path": "answers/task1/english-uncovered-test",
       "split": "test_gold",
       "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/answers/task1/english-uncovered-test"
+    },
+    "eng-train-high.tsv": {
+      "language_iso": "eng",
+      "language_name": "english",
+      "line_count": 10000,
+      "sha256": "e6c87ce340eaec2df80aa51d6c1ef9571361cdfdf2b21029711d8bc6bee3ce05",
+      "source_path": "all/task1/english-train-high",
+      "split": "train_high",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/english-train-high"
     },
     "eng-train-low.tsv": {
       "language_iso": "eng",
@@ -92,6 +110,15 @@
       "split": "test_gold",
       "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/answers/task1/french-uncovered-test"
     },
+    "fra-train-high.tsv": {
+      "language_iso": "fra",
+      "language_name": "french",
+      "line_count": 10000,
+      "sha256": "05cb1762fc55bc426a119888126055dd487b4f67fc0f78b0557ce5cce41604b7",
+      "source_path": "all/task1/french-train-high",
+      "split": "train_high",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/french-train-high"
+    },
     "fra-train-low.tsv": {
       "language_iso": "fra",
       "language_name": "french",
@@ -127,6 +154,15 @@
       "source_path": "answers/task1/italian-uncovered-test",
       "split": "test_gold",
       "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/answers/task1/italian-uncovered-test"
+    },
+    "ita-train-high.tsv": {
+      "language_iso": "ita",
+      "language_name": "italian",
+      "line_count": 10000,
+      "sha256": "b0e8a8e120fc8e34e02eb5f514ed1e8ac38f04277283a893003142203d428fa2",
+      "source_path": "all/task1/italian-train-high",
+      "split": "train_high",
+      "url": "https://raw.githubusercontent.com/sigmorphon/conll2017/519bb1677a7c747b3863d37069ffd395062288d8/all/task1/italian-train-high"
     },
     "ita-train-low.tsv": {
       "language_iso": "ita",
