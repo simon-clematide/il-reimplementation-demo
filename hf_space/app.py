@@ -286,8 +286,16 @@ The models are trained and evaluated on official splits from the CoNLL-SIGMORPHO
 """
 
 
+# Stylesheet and fonts for calm academic styling with Source Sans 3 / Source Sans Pro (UZH style)
+CUSTOM_HEAD = """<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap">"""
+
 CUSTOM_CSS = """
-/* Calm academic styling */
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+
+/* Calm academic aesthetic with Source Sans 3 / Source Sans Pro */
+html, body, .gradio-container, button, input, select, textarea, .prose {
+    font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+}
 .gradio-container {
     max-width: 960px !important;
     margin: 0 auto !important;
@@ -304,7 +312,7 @@ CUSTOM_CSS = """
 }
 """
 
-with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUSTOM_CSS) as demo:
+with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUSTOM_CSS, head=CUSTOM_HEAD) as demo:
     with gr.Tabs() as tabs:
 
         # ----------------------------------------------------
