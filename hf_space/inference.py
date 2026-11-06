@@ -97,14 +97,26 @@ class TransducerSpaceEngine:
                 self._data_index = {}
         return self._data_index
 
-    def get_random_sample(self, lang: str, split: str = "dev") -> Optional[Dict[str, str]]:
+    def get_random_sample(
+        self, lang: str, split: str = "dev", filter_type: str = "any"
+    ) -> Optional[Dict[str, str]]:
         import random
         data = self._load_data_index()
         split_key = "dev" if split.lower().startswith("dev") else "test"
         samples = data.get(lang, {}).get(split_key, [])
         if not samples:
             return None
-        return random.choice(samples)
+
+        if filter_type == "same":
+            filtered = [s for s in samples if s.get("lemma") == s.get("target")]
+        elif filter_type == "different":
+            filtered = [s for s in samples if s.get("lemma") != s.get("target")]
+        else:
+            filtered = samples
+
+        if not filtered:
+            return None
+        return random.choice(filtered)
 
     def check_training_coverage(self, lang: str, lemma: str, features_str: str) -> Dict[str, Dict[str, bool]]:
         data = self._load_data_index()

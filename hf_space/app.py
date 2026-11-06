@@ -203,10 +203,20 @@ def run_experiment(language_label: str, lemma: str, features_str: str, gold_targ
         )
 
 
-def sample_test_and_run(language_label: str):
-    """Samples a random item from the test set and immediately runs the models."""
+def sample_test_and_run(language_label: str, sample_type: str = "Different (Input ≠ Output)"):
+    """Samples an item from the test set according to whether lemma and target differ, and immediately runs the models."""
     iso = LANGUAGE_MAP.get(language_label, "eng")
-    sample = engine.get_random_sample(iso, split="test")
+    if "Different" in sample_type:
+        filter_type = "different"
+    elif "Same" in sample_type:
+        filter_type = "same"
+    else:
+        filter_type = "any"
+
+    sample = engine.get_random_sample(iso, split="test", filter_type=filter_type)
+    if not sample:
+        # Fallback to any if specific subset is exhausted or unavailable
+        sample = engine.get_random_sample(iso, split="test", filter_type="any")
     if not sample:
         return "sing", "V;PST", "", "", "", "", "", "", "", "", "No test samples available.", "Verb · Past"
 
@@ -374,10 +384,16 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
                     value="English",
                     scale=2,
                 )
+                sample_type_radio = gr.Radio(
+                    label="Sample Type",
+                    choices=["Different (Input ≠ Output)", "Same (Input = Output)", "Any"],
+                    value="Different (Input ≠ Output)",
+                    scale=3,
+                )
                 sample_btn = gr.Button(
                     "Sample Test Example",
                     variant="secondary",
-                    scale=1,
+                    scale=2,
                 )
 
             # Area B: Experiment Inputs
@@ -477,7 +493,7 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
     # Sampling button immediately selects test item and executes the experiment
     sample_btn.click(
         fn=sample_test_and_run,
-        inputs=[lang_dropdown],
+        inputs=[lang_dropdown, sample_type_radio],
         outputs=[
             lemma_input,
             feat_input,
