@@ -297,8 +297,18 @@ html, body, .gradio-container, button, input, select, textarea, .prose {
     font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
 .gradio-container {
-    max-width: 960px !important;
-    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 16px 24px !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+}
+.gradio-container main.fillable {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box;
 }
 .overview-card {
     background-color: var(--background-fill-secondary);
