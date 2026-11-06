@@ -1,12 +1,13 @@
 """
 Gradio Web Application for Neural Transducer Morphological Inflection.
-Calm, pedagogical interface organized into:
-- Overview (Purpose, research questions, getting started)
-- Experiment (Configure -> Experiment -> Results with progressive disclosure)
-- Documentation (UniMorph tag guide, model architecture, benchmark datasets)
+Focused exploration of training-size effects with a precomputed test gallery,
+live custom inputs, and progressively disclosed model explanations.
 """
 
 import json
+import inspect
+from html import escape
+from types import SimpleNamespace
 import os
 import gradio as gr
 from inference import TransducerSpaceEngine
@@ -14,43 +15,11 @@ from inference import TransducerSpaceEngine
 # Initialize inference engine
 engine = TransducerSpaceEngine()
 
-# Load curated examples
-EXAMPLES_FILE = os.path.join(os.path.dirname(__file__), "examples.json")
-with open(EXAMPLES_FILE, "r", encoding="utf-8") as f:
-    CURATED_EXAMPLES = json.load(f)
-
 LANGUAGE_MAP = {
     "English": "eng",
     "German": "deu",
     "French": "fra",
     "Italian": "ita",
-}
-
-DATASET_LINKS = {
-    "English": {
-        "train_100": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-low",
-        "train_1000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-medium",
-        "train_10000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-train-high",
-        "test": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/english-uncovered-test",
-    },
-    "German": {
-        "train_100": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-low",
-        "train_1000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-medium",
-        "train_10000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-train-high",
-        "test": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/german-uncovered-test",
-    },
-    "French": {
-        "train_100": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-low",
-        "train_1000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-medium",
-        "train_10000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-train-high",
-        "test": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/french-uncovered-test",
-    },
-    "Italian": {
-        "train_100": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-low",
-        "train_1000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-medium",
-        "train_10000": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-train-high",
-        "test": "https://raw.githubusercontent.com/sigmorphon/conll2017/master/all/task1/italian-uncovered-test",
-    },
 }
 
 TAG_DEFINITIONS = {
@@ -204,117 +173,6 @@ def build_coverage_markdown(lang_iso: str, lemma: str, features_str: str) -> str
     return md.strip()
 
 
-def run_experiment(language_label: str, lemma: str, features_str: str, gold_target: str = ""):
-    """Runs prediction for 100, 1,000, and 10,000 regimes, comparing against gold target if provided."""
-    inline_desc = explain_features_inline(features_str)
-
-    if not lemma or not features_str:
-        return (
-            "Please provide a lemma and features.",
-            "",
-            "Please provide a lemma and features.",
-            "",
-            "Please provide a lemma and features.",
-            "",
-            "",
-            "No action trace available.",
-            inline_desc,
-        )
-
-    iso = LANGUAGE_MAP.get(language_label, "eng")
-    lemma = lemma.strip()
-    features_str = features_str.strip()
-    gold_target = (gold_target or "").strip()
-
-    cov_md = build_coverage_markdown(iso, lemma, features_str)
-
-    try:
-        res_100 = engine.predict(iso, "100", lemma, features_str, beam_width=1)
-        res_1000 = engine.predict(iso, "1000", lemma, features_str, beam_width=1)
-        res_10000 = engine.predict(iso, "10000", lemma, features_str, beam_width=1)
-
-        pred_100 = res_100.predicted_form
-        pred_1000 = res_1000.predicted_form
-        pred_10000 = res_10000.predicted_form
-
-        status_100 = ""
-        status_1000 = ""
-        status_10000 = ""
-        if gold_target:
-            status_100 = "✅" if pred_100 == gold_target else "❌"
-            status_1000 = "✅" if pred_1000 == gold_target else "❌"
-            status_10000 = "✅" if pred_10000 == gold_target else "❌"
-
-        trace_text = format_comparative_action_trace(
-            res_100.action_trace, res_1000.action_trace, res_10000.action_trace
-        )
-
-        return (
-            pred_100,
-            status_100,
-            pred_1000,
-            status_1000,
-            pred_10000,
-            status_10000,
-            cov_md,
-            trace_text,
-            inline_desc,
-        )
-    except Exception as e:
-        return (
-            f"Error: {e}",
-            "",
-            f"Error: {e}",
-            "",
-            f"Error: {e}",
-            "",
-            "",
-            str(e),
-            inline_desc,
-        )
-
-
-def sample_test_and_run(language_label: str, sample_type: str = "Different (Input ≠ Output)"):
-    """Samples an item from the test set according to whether lemma and target differ, and immediately runs the models."""
-    iso = LANGUAGE_MAP.get(language_label, "eng")
-    if "Different" in sample_type:
-        filter_type = "different"
-    elif "Same" in sample_type:
-        filter_type = "same"
-    else:
-        filter_type = "any"
-
-    sample = engine.get_random_sample(iso, split="test", filter_type=filter_type)
-    if not sample:
-        # Fallback to any if specific subset is exhausted or unavailable
-        sample = engine.get_random_sample(iso, split="test", filter_type="any")
-    if not sample:
-        return "sing", "V;PST", "", "", "", "", "", "", "", "", "No test samples available.", "Verb · Past"
-
-    lemma = sample["lemma"]
-    features_str = sample["features"]
-    gold_target = sample["target"]
-
-    pred_100, stat_100, pred_1000, stat_1000, pred_10000, stat_10000, cov_md, trace_text, inline_desc = run_experiment(
-        language_label, lemma, features_str, gold_target
-    )
-
-    return (
-        lemma,
-        features_str,
-        gold_target,
-        pred_100,
-        stat_100,
-        pred_1000,
-        stat_1000,
-        pred_10000,
-        stat_10000,
-        cov_md,
-        trace_text,
-        inline_desc,
-    )
-
-
 # Documentation markdown sections
 UNIMORPH_DOC_MD = """
 Morphological features in UniMorph are represented as standardized, semicolon-delimited dimensional tags.
@@ -367,7 +225,109 @@ The models are trained and evaluated on official splits from the CoNLL-SIGMORPHO
 """
 
 
-# Stylesheet and fonts for calm academic styling with Source Sans 3 / Source Sans Pro (UZH style)
+
+# The gallery contains real, precomputed test predictions; custom inputs run live.
+GALLERY_PATH = os.path.join(os.path.dirname(__file__), "exploration_examples.json")
+with open(GALLERY_PATH, encoding="utf-8") as f:
+    GALLERY = json.load(f)["examples"]
+FOCUSES = ["More data helps", "Models disagree", "Largest model misses", "All models correct", "All examples"]
+
+
+def gallery_items(language, focus):
+    return [s for s in GALLERY if s["language"] == LANGUAGE_MAP[language] and focus in s["groups"]]
+
+
+def gallery_choices(language, focus):
+    return [(f'{s["lemma"]} → {s["target"]} · {s["features"]}', str(GALLERY.index(s)))
+            for s in gallery_items(language, focus)]
+
+
+def present(language, lemma, features, gold, results, source):
+    task = f"## {escape(lemma)} → {escape(explain_features_inline(features))}"
+    task += f"\n\n{escape(language)} · `{escape(features)}`"
+    if gold:
+        task += f" · Reference: **{escape(gold)}**"
+    rows = []
+    for size, result in zip(["100", "1,000", "10,000"], results):
+        form = result.predicted_form
+        matches = form == gold
+        status = (f'<span class="match-status {"correct" if matches else "incorrect"}" '
+                  f'role="img" aria-label="{"Correct" if matches else "Incorrect"}" '
+                  f'title="{"Correct" if matches else "Incorrect"}">{"✓" if matches else "✗"}</span>') if gold else ""
+        status_cell = f'<td>{status}</td>' if gold else ''
+        rows.append(f'<tr><td>{size}</td><td class="prediction">{escape(form)}</td>{status_cell}</tr>')
+    reference_header = '<th>Reference match</th>' if gold else ''
+    table = ('<table class="comparison"><thead><tr><th>Training examples</th><th>Prediction</th>' + reference_header + '</tr></thead>'
+             '<tbody>' + ''.join(rows) + '</tbody></table>')
+    return task, table, source, build_coverage_markdown(LANGUAGE_MAP[language], lemma, features), format_comparative_action_trace(*[r.action_trace for r in results])
+
+
+def show_gallery(example_id):
+    if example_id is None:
+        return "## No examples in this group", "", "Choose another focus or try your own input.", "", ""
+    sample = GALLERY[int(example_id)]
+    results = [SimpleNamespace(**dict(r, action_trace=[SimpleNamespace(**a) for a in r["action_trace"]])) for r in sample["results"]]
+    language = next(label for label, iso in LANGUAGE_MAP.items() if iso == sample["language"])
+    return present(language, sample["lemma"], sample["features"], sample["target"], results,
+                   "Precomputed test example · Selected cases illustrate behavior, not overall accuracy.")
+
+
+def change_gallery(language, focus):
+    choices = gallery_choices(language, focus)
+    selected = choices[0][1] if choices else None
+    return (gr.Dropdown(choices=choices, value=selected), *show_gallery(selected))
+
+
+def custom_run(language, lemma, features):
+    lemma, features = lemma.strip(), features.strip()
+    if not lemma or not features:
+        raise gr.Error("Enter a word and morphological features.")
+    try:
+        results = [engine.predict(LANGUAGE_MAP[language], size, lemma, features) for size in ["100", "1000", "10000"]]
+        return present(language, lemma, features, "", results, "Live prediction · No reference answer supplied.")
+    except Exception as exc:
+        raise gr.Error(f"Could not generate predictions: {exc}") from exc
+
+
+# Feature bundles are already precomputed from each training split in data_index.json.
+# Keep only observed full bundles, rather than constructing a Cartesian product.
+FORM_LABELS = {"V": "Verb", "N": "Noun", "V.PTCP": "Participle", "V.CVB": "Converb / gerund"}
+
+
+def feature_group(bundle):
+    tags = bundle.split(";")
+    return next((tag for tag in ("V.PTCP", "V.CVB") if tag in tags), tags[0])
+
+
+FEATURE_CATALOG = {}
+for iso, data in engine._load_data_index().items():
+    groups = {}
+    for bundle in data["training_coverage"]["10000"]["features"]:
+        groups.setdefault(feature_group(bundle), []).append(bundle)
+    FEATURE_CATALOG[iso] = groups
+
+
+def pos_choices(language):
+    return [(FORM_LABELS.get(tag, tag), tag) for tag in sorted(FEATURE_CATALOG[LANGUAGE_MAP[language]], key=lambda tag: (tag != "V", tag))]
+
+
+def form_choices(language, pos):
+    return [(f"{explain_features_inline(bundle)} · {bundle}", bundle)
+            for bundle in FEATURE_CATALOG[LANGUAGE_MAP[language]].get(pos, [])]
+
+
+def reset_forms(language, pos):
+    choices = form_choices(language, pos)
+    value = next((bundle for _, bundle in choices if bundle == "V;PST"), choices[0][1] if choices else "")
+    return gr.Dropdown(choices=choices, value=value), value, explain_features_inline(value)
+
+
+def reset_language_forms(language):
+    choices = pos_choices(language)
+    pos = choices[0][1]
+    return gr.Dropdown(choices=choices, value=pos), *reset_forms(language, pos)
+
+
 CUSTOM_HEAD = """<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap">"""
 
 CUSTOM_CSS = """
@@ -377,236 +337,117 @@ CUSTOM_CSS = """
 html, body, .gradio-container, button, input, select, textarea, .prose {
     font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
-.gradio-container {
-    width: 100% !important;
-    max-width: none !important;
-    padding: 16px 24px !important;
-    margin: 0 !important;
-    box-sizing: border-box;
-}
-.gradio-container main.fillable {
-    width: 100% !important;
-    max-width: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-sizing: border-box;
-}
-.overview-card {
-    background-color: var(--background-fill-secondary);
-    border: 1px solid var(--border-color-primary);
-    border-radius: 6px;
-    padding: 16px;
-}
-.benchmark-badge {
-    font-size: 0.9em;
-    font-weight: 500;
-}
-.result-status input {
-    text-align: center !important;
-    font-size: 1.15em !important;
-    padding: 0 !important;
-}
-.result-status {
-    min-width: 48px !important;
-    max-width: 60px !important;
+.gradio-container {width:100% !important; max-width:none !important; margin:0 !important; padding:20px 24px !important; box-sizing:border-box;}
+.gradio-container .main, .gradio-container main {padding:0 !important;}
+.prose {font-size: 17px !important; line-height: 1.55 !important;}
+.prose h1 {font-size: 32px !important; letter-spacing: -.025em;}
+.prose h2 {font-size: 24px !important;}
+.comparison {border:0 !important; width:100%; border-collapse:collapse; font-size:16px; margin:8px 0 20px;}
+.comparison th {text-align:left; font-weight:500; color:var(--body-text-color-subdued);}
+.gradio-container .comparison td, .gradio-container .comparison th {border-left:0 !important; border-right:0 !important; border-top:0 !important; padding:12px 8px; border-bottom:1px solid var(--border-color-primary);}
+.comparison .match-status {font-size:24px; font-weight:700;}
+.comparison .match-status.correct {color:#15803d;}
+.comparison .match-status.incorrect {color:#dc2626;}
+.comparison .prediction {font-size:26px; font-weight:600;}
+@media(max-width:600px) {
+  .gradio-container .comparison td, .gradio-container .comparison th {border-left:0 !important; border-right:0 !important; border-top:0 !important; padding:10px 4px; font-size:14px;}
+  .comparison .prediction {font-size:22px; overflow-wrap:anywhere;}
 }
 """
 
-with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUSTOM_CSS, head=CUSTOM_HEAD) as demo:
+STYLING = dict(theme=gr.themes.Base(primary_hue="blue", neutral_hue="slate", text_size="lg"), css=CUSTOM_CSS, head=CUSTOM_HEAD)
+# Gradio 6 moved styling from Blocks to launch; retain Space compatibility.
+STYLE_ON_BLOCKS = "theme" in inspect.signature(gr.Blocks.__init__).parameters
+with gr.Blocks(title="Morphological Inflection", fill_width=True, **(STYLING if STYLE_ON_BLOCKS else {})) as demo:
     with gr.Tabs() as tabs:
+        with gr.Tab("Overview", id="overview"):
+            gr.Markdown("""
+# How much data does it take to learn a language pattern?
+Compare neural models trained on **100, 1,000, and 10,000 examples**. See when more data helps—and when it doesn't.
 
-        # ----------------------------------------------------
-        # Tab 1: Overview
-        # ----------------------------------------------------
-        with gr.Tab("Overview", id="tab_overview"):
-            gr.Markdown(
-                """
-                # Morphological Inflection
-                What happens when a neural transducer learns morphology from **100**, **1,000**, or **10,000 examples**?
+## The task: turn a word into the form you need
+Given a dictionary form and grammatical features, predict an inflected word: **sing + past tense → sang**. Explore English, German, French, and Italian, from regular endings to irregular stem changes.
 
-                This demonstrator investigates how transition-based neural string transducers (Makarov & Clematide, 2020) generalize morphological inflection across four European languages under low-, medium-, and high-resource supervision.
-                """
-            )
+## The models: build words one edit at a time
+These transition-based neural transducers learn to **copy, delete, insert, or substitute characters**. Each language has three separately trained models, using the same architecture with different amounts of supervision. Training uses imitation learning with an edit-distance expert.
 
+## The exploration: look beyond a correct answer
+Start with test examples where model predictions differ. Compare their outputs, inspect how they build a word, and check whether the word or feature combination appeared in training. Then try your own input.
+
+Can a small model learn a productive rule? Does more data resolve an irregular form? Can the largest model still get it wrong?
+""")
+            start = gr.Button("Explore the models →", variant="primary")
+            gr.Markdown("Based on Makarov & Clematide (2020) · CoNLL–SIGMORPHON 2017 Task 1. Details and data links in Documentation.")
+        with gr.Tab("Explore", id="explore"):
+            gr.Markdown("# Compare inflections")
             with gr.Row():
-                with gr.Column(elem_classes=["overview-card"]):
-                    gr.Markdown("### Explore\nGenerate inflected forms across English, German, French, and Italian from lemma and feature inputs.")
-                with gr.Column(elem_classes=["overview-card"]):
-                    gr.Markdown("### Compare\nExamine side-by-side predictions across low (100), medium (1,000), and high (10,000) supervision regimes.")
-                with gr.Column(elem_classes=["overview-card"]):
-                    gr.Markdown("### Understand\nInspect whether inputs were observed during training and how edit actions construct the output.")
-
+                language = gr.Dropdown(list(LANGUAGE_MAP), value="English", label="Language", scale=1, min_width=140)
+                focus = gr.Dropdown(FOCUSES, value=FOCUSES[0], label="Explore cases where…", scale=2, min_width=200)
+            initial_choices = gallery_choices("English", FOCUSES[0])
+            initial_id = initial_choices[0][1] if initial_choices else None
+            example = gr.Dropdown(initial_choices, value=initial_id, label="Test example")
+            initial = show_gallery(initial_id)
+            task = gr.Markdown(initial[0])
+            comparison = gr.HTML(initial[1])
+            source = gr.Markdown(initial[2])
+            with gr.Accordion("How was the word built?", open=False):
+                gr.Markdown("Compare edit actions across models. Step numbers are decoding steps; models can consume input at different rates.")
+                trace = gr.Markdown(initial[4])
+            with gr.Accordion("Was this input seen in training?", open=False):
+                coverage = gr.Markdown(initial[3])
+            with gr.Accordion("Sample another test example", open=False):
+                sample_filter = gr.Radio(["Different (Input ≠ Output)", "Same (Input = Output)", "Any"], value="Different (Input ≠ Output)", label="Word and reference")
+                sample_button = gr.Button("Sample and run live")
+        with gr.Tab("Try your own word", id="custom"):
+            gr.Markdown("# Try your own word\nCompare live predictions. There is no reference answer for custom inputs.")
+            custom_language = gr.Dropdown(list(LANGUAGE_MAP), value="English", label="Language")
+            gr.Markdown("Choose a form observed in this language’s 10,000-example training set. Availability depends on the dataset; not every form applies to every word.")
+            lemma = gr.Textbox(label="Dictionary form", value="sing")
             with gr.Row():
-                start_btn = gr.Button("Start Exploring →", variant="primary", size="lg")
-
-            gr.Markdown(
-                """
-                *Data: Official CoNLL-SIGMORPHON 2017 Shared Task 1 benchmark data.*
-                *Detailed documentation, UniMorph feature tag guides, and data split links are available in the **Documentation** tab.*
-                """
-            )
-
-        # ----------------------------------------------------
-        # Tab 2: Experiment
-        # ----------------------------------------------------
-        with gr.Tab("Experiment", id="tab_experiment"):
-
-            # Area A: Configure
-            gr.Markdown("### Configure")
-            with gr.Row():
-                lang_dropdown = gr.Dropdown(
-                    label="Language",
-                    choices=list(LANGUAGE_MAP.keys()),
-                    value="English",
-                    scale=2,
-                )
-                sample_type_radio = gr.Radio(
-                    label="Sample Type",
-                    choices=["Different (Input ≠ Output)", "Same (Input = Output)", "Any"],
-                    value="Different (Input ≠ Output)",
-                    scale=3,
-                )
-                sample_btn = gr.Button(
-                    "Sample Test Example",
-                    variant="secondary",
-                    scale=2,
-                )
-
-            # Area B: Experiment Inputs
-            gr.Markdown("### Experiment")
-            with gr.Row():
-                lemma_input = gr.Textbox(
-                    label="Lemma",
-                    placeholder="e.g. sing",
-                    value="sing",
-                    scale=1,
-                )
-                with gr.Column(scale=2):
-                    feat_input = gr.Textbox(
-                        label="Features (UniMorph)",
-                        placeholder="e.g. V;PST",
-                        value="V;PST",
-                    )
-                    feat_inline_desc = gr.Markdown(
-                        value=explain_features_inline("V;PST"),
-                    )
-
-            with gr.Row():
-                gold_target_input = gr.Textbox(
-                    label="Benchmark Reference (Target Form)",
-                    placeholder="Populated when sampling from test set",
-                    value="",
-                    interactive=False,
-                )
-
-            with gr.Row():
-                run_btn = gr.Button("Generate Inflection", variant="primary")
-
-            # Area C: Results
-            gr.Markdown("### Results")
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        out_100 = gr.Textbox(label="100 Examples (Low)", interactive=False, scale=5)
-                        stat_100 = gr.Textbox(label="Status (100)", show_label=False, interactive=False, scale=1, elem_classes=["result-status"])
-                with gr.Column():
-                    with gr.Row():
-                        out_1000 = gr.Textbox(label="1,000 Examples (Medium)", interactive=False, scale=5)
-                        stat_1000 = gr.Textbox(label="Status (1,000)", show_label=False, interactive=False, scale=1, elem_classes=["result-status"])
-                with gr.Column():
-                    with gr.Row():
-                        out_10000 = gr.Textbox(label="10,000 Examples (High)", interactive=False, scale=5)
-                        stat_10000 = gr.Textbox(label="Status (10,000)", show_label=False, interactive=False, scale=1, elem_classes=["result-status"])
-
-            with gr.Accordion("Training Data Exposure", open=False):
-                coverage_box = gr.Markdown(
-                    "Generate an inflection or sample a test item to inspect training exposure."
-                )
-
-            with gr.Accordion("Transduction Steps", open=False):
-                trace_box = gr.Markdown(
-                    "Generate an inflection or sample a test item to inspect transduction steps."
-                )
-
-            # Quick clickable examples
-            gr.Markdown("#### Examples")
-            example_rows = []
-            for ex in CURATED_EXAMPLES:
-                example_rows.append([ex["language"], ex["lemma"], ex["features"], ""])
-
-            gr.Examples(
-                examples=example_rows,
-                inputs=[lang_dropdown, lemma_input, feat_input, gold_target_input],
-                outputs=[out_100, stat_100, out_1000, stat_1000, out_10000, stat_10000, coverage_box, trace_box, feat_inline_desc],
-                fn=run_experiment,
-                cache_examples=False,
-            )
-
-        # ----------------------------------------------------
-        # Tab 3: Documentation
-        # ----------------------------------------------------
-        with gr.Tab("Documentation", id="tab_docs"):
-            with gr.Accordion("UniMorph Morphological Features", open=False):
+                pos = gr.Dropdown(pos_choices("English"), value="V", label="Part of speech / word form", scale=1, min_width=160)
+                form = gr.Dropdown(form_choices("English", "V"), value="V;PST", label="Grammatical form", scale=2, min_width=220)
+            description = gr.Markdown(explain_features_inline("V;PST"))
+            with gr.Accordion("Edit UniMorph tags manually", open=False):
+                features = gr.Textbox(label="Features used for prediction", value="V;PST", info="Overrides the selected form. Separate tags with semicolons.")
+            run = gr.Button("Generate inflections", variant="primary")
+            custom_task = gr.Markdown()
+            custom_comparison = gr.HTML()
+            custom_source = gr.Markdown()
+            with gr.Accordion("How was the word built?", open=False):
+                custom_trace = gr.Markdown("Generate inflections to inspect the edit actions.")
+            with gr.Accordion("Was this input seen in training?", open=False):
+                custom_coverage = gr.Markdown("Generate inflections to inspect training exposure.")
+        with gr.Tab("Documentation", id="docs"):
+            gr.Markdown("# About the experiment")
+            with gr.Accordion("UniMorph feature guide", open=False):
                 gr.Markdown(UNIMORPH_DOC_MD)
-
-            with gr.Accordion("Model Architecture & Training", open=False):
+            with gr.Accordion("Models and training", open=False):
                 gr.Markdown(ARCHITECTURE_DOC_MD)
-
-            with gr.Accordion("Benchmark Data: CoNLL-SIGMORPHON 2017 Task 1", open=False):
+                gr.Markdown("[Makarov & Clematide (2020)](https://aclanthology.org/2020.sigmorphon-1.19/) · Greedy decoding for every comparison. Training size is a comparison across these trained models, not a guarantee of improvement on every word.")
+            with gr.Accordion("Benchmark and data", open=False):
                 gr.Markdown(BENCHMARK_DOC_MD)
+                gr.Markdown("The gallery uses a deterministic subset of held-out test items whose input differs from the reference. Cases are grouped by actual predictions. These selected examples are not an accuracy estimate. The live sampler also supports unchanged forms.")
 
-    # ----------------------------------------------------
-    # Event Bindings
-    # ----------------------------------------------------
-    # Start Exploring button switches to Experiment tab
-    start_btn.click(
-        fn=lambda: gr.Tabs(selected="tab_experiment"),
-        outputs=[tabs],
-    )
+    outputs = [task, comparison, source, coverage, trace]
+    start.click(lambda: gr.Tabs(selected="explore"), outputs=tabs)
+    language.change(change_gallery, [language, focus], [example, *outputs])
+    focus.change(change_gallery, [language, focus], [example, *outputs])
+    example.input(show_gallery, example, outputs)
+    custom_language.change(reset_language_forms, custom_language, [pos, form, features, description])
+    pos.input(reset_forms, [custom_language, pos], [form, features, description])
+    form.input(lambda value: (value, explain_features_inline(value)), form, [features, description])
+    features.input(explain_features_inline, features, description)
+    run.click(custom_run, [custom_language, lemma, features], [custom_task, custom_comparison, custom_source, custom_coverage, custom_trace])
 
-    # Dynamic feature explanation on change
-    feat_input.change(
-        fn=explain_features_inline,
-        inputs=[feat_input],
-        outputs=[feat_inline_desc],
-    )
+    def sample_live(language, sample_type):
+        filter_type = "different" if "Different" in sample_type else "same" if "Same" in sample_type else "any"
+        sample = engine.get_random_sample(LANGUAGE_MAP[language], split="test", filter_type=filter_type)
+        if not sample:
+            raise gr.Error("No test examples available for this selection.")
+        results = [engine.predict(LANGUAGE_MAP[language], size, sample["lemma"], sample["features"]) for size in ["100", "1000", "10000"]]
+        return present(language, sample["lemma"], sample["features"], sample["target"], results, "Live prediction · Random held-out test example.")
 
-    # Sampling button immediately selects test item and executes the experiment
-    sample_btn.click(
-        fn=sample_test_and_run,
-        inputs=[lang_dropdown, sample_type_radio],
-        outputs=[
-            lemma_input,
-            feat_input,
-            gold_target_input,
-            out_100,
-            stat_100,
-            out_1000,
-            stat_1000,
-            out_10000,
-            stat_10000,
-            coverage_box,
-            trace_box,
-            feat_inline_desc,
-        ],
-    )
-
-    # Manual run button
-    run_btn.click(
-        fn=run_experiment,
-        inputs=[lang_dropdown, lemma_input, feat_input, gold_target_input],
-        outputs=[
-            out_100,
-            stat_100,
-            out_1000,
-            stat_1000,
-            out_10000,
-            stat_10000,
-            coverage_box,
-            trace_box,
-            feat_inline_desc,
-        ],
-    )
+    sample_button.click(sample_live, [language, sample_filter], outputs)
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(**({} if STYLE_ON_BLOCKS else STYLING))
