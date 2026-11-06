@@ -99,15 +99,88 @@ def explain_features_inline(features_str: str) -> str:
     return " · ".join(parts)
 
 
-def format_action_trace(trace) -> str:
+def _pluralize_op(op: str, count: int) -> str:
+    forms = {
+        "COPY": ("copy", "copies"),
+        "SUBST": ("substitution", "substitutions"),
+        "INSERT": ("insertion", "insertions"),
+        "DELETE": ("deletion", "deletions"),
+    }
+    sg, pl = forms.get(op, (op.lower(), op.lower() + "s"))
+    return f"{count} {sg if count == 1 else pl}"
+
+
+def _summarize_trace(trace) -> str:
     if not trace:
-        return "No action trace available."
-    rows = []
-    for r in trace:
-        src = f"'{r.source_char}' (pos {r.source_pos})" if r.source_char else "-"
-        emitted = f"'{r.emitted_char}'" if r.emitted_char else "-"
-        rows.append(f"Step {r.step:02d}: {r.operation:10s} | In: {src:16s} | Out: {emitted:8s} | {r.description}")
-    return "\n".join(rows)
+        return "No actions"
+    counts = {}
+    for s in trace:
+        if s.operation == "END":
+            continue
+        op = "SUBST" if s.operation == "SUBSTITUTE" else s.operation
+        counts[op] = counts.get(op, 0) + 1
+    parts = [_pluralize_op(k, v) for k, v in counts.items()]
+    return ", ".join(parts) if parts else "no edit actions"
+
+
+def _format_action_cell(step) -> str:
+    if not step:
+        return "—"
+    op = step.operation
+    src = step.source_char
+    emitted = step.emitted_char
+    if op == "COPY":
+        return f"COPY (`{emitted}`)"
+    elif op == "SUBSTITUTE":
+        return f"**SUBST** (`{src}` → `{emitted}`)"
+    elif op == "INSERT":
+        return f"INSERT (`{emitted}`)"
+    elif op == "DELETE":
+        return f"DELETE (`{src}`)"
+    elif op == "END":
+        return "*END*"
+    return f"{op}"
+
+
+def format_comparative_action_trace(trace_100, trace_1000, trace_10000) -> str:
+    if not trace_100 and not trace_1000 and not trace_10000:
+        return "Generate an inflection or sample a test item to inspect transduction steps."
+
+    max_len = max(len(trace_100 or []), len(trace_1000 or []), len(trace_10000 or []))
+
+    summary_md = (
+        f"- **100 Examples:** {_summarize_trace(trace_100)}\n"
+        f"- **1,000 Examples:** {_summarize_trace(trace_1000)}\n"
+        f"- **10,000 Examples:** {_summarize_trace(trace_10000)}\n"
+    )
+
+    rows = [
+        "| Step | 100 Examples (Low) | 1,000 Examples (Medium) | 10,000 Examples (High) | Alignment |",
+        "| :---: | :--- | :--- | :--- | :--- |",
+    ]
+
+    for i in range(max_len):
+        s100 = trace_100[i] if i < len(trace_100 or []) else None
+        s1000 = trace_1000[i] if i < len(trace_1000 or []) else None
+        s10000 = trace_10000[i] if i < len(trace_10000 or []) else None
+
+        c100 = _format_action_cell(s100)
+        c1000 = _format_action_cell(s1000)
+        c10000 = _format_action_cell(s10000)
+
+        # Check alignment across active steps
+        keys = set()
+        for s in (s100, s1000, s10000):
+            if s is not None:
+                keys.add((s.operation, s.source_char, s.emitted_char))
+            else:
+                keys.add(None)
+
+        alignment = "✓ Match" if len(keys) == 1 else "⚠️ Diverged"
+
+        rows.append(f"| {i+1} | {c100} | {c1000} | {c10000} | {alignment} |")
+
+    return f"{summary_md}\n" + "\n".join(rows)
 
 
 def build_coverage_markdown(lang_iso: str, lemma: str, features_str: str) -> str:
@@ -172,10 +245,8 @@ def run_experiment(language_label: str, lemma: str, features_str: str, gold_targ
             status_1000 = "✅" if pred_1000 == gold_target else "❌"
             status_10000 = "✅" if pred_10000 == gold_target else "❌"
 
-        trace_text = (
-            f"=== 100 Examples ===\n{format_action_trace(res_100.action_trace)}\n\n"
-            f"=== 1,000 Examples ===\n{format_action_trace(res_1000.action_trace)}\n\n"
-            f"=== 10,000 Examples ===\n{format_action_trace(res_10000.action_trace)}"
+        trace_text = format_comparative_action_trace(
+            res_100.action_trace, res_1000.action_trace, res_10000.action_trace
         )
 
         return (
@@ -453,7 +524,9 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
                 )
 
             with gr.Accordion("Transduction Steps", open=False):
-                trace_box = gr.Code(label="Action Sequence", language="markdown", interactive=False)
+                trace_box = gr.Markdown(
+                    "Generate an inflection or sample a test item to inspect transduction steps."
+                )
 
             # Quick clickable examples
             gr.Markdown("#### Examples")
