@@ -168,9 +168,9 @@ def run_experiment(language_label: str, lemma: str, features_str: str, gold_targ
         status_1000 = ""
         status_10000 = ""
         if gold_target:
-            status_100 = "Match" if pred_100 == gold_target else "Mismatch"
-            status_1000 = "Match" if pred_1000 == gold_target else "Mismatch"
-            status_10000 = "Match" if pred_10000 == gold_target else "Mismatch"
+            status_100 = "✅" if pred_100 == gold_target else "❌"
+            status_1000 = "✅" if pred_1000 == gold_target else "❌"
+            status_10000 = "✅" if pred_10000 == gold_target else "❌"
 
         trace_text = (
             f"=== 100 Examples ===\n{format_action_trace(res_100.action_trace)}\n\n"
@@ -320,6 +320,10 @@ html, body, .gradio-container, button, input, select, textarea, .prose {
     font-size: 0.9em;
     font-weight: 500;
 }
+.result-status input {
+    text-align: center !important;
+    font-size: 1.25em !important;
+}
 """
 
 with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUSTOM_CSS, head=CUSTOM_HEAD) as demo:
@@ -411,13 +415,13 @@ with gr.Blocks(title="Morphological Inflection", theme=gr.themes.Soft(), css=CUS
             with gr.Row():
                 with gr.Column():
                     out_100 = gr.Textbox(label="100 Examples (Low)", interactive=False)
-                    stat_100 = gr.Textbox(label="Status (100)", show_label=False, interactive=False)
+                    stat_100 = gr.Textbox(label="Status (100)", show_label=False, interactive=False, elem_classes=["result-status"])
                 with gr.Column():
                     out_1000 = gr.Textbox(label="1,000 Examples (Medium)", interactive=False)
-                    stat_1000 = gr.Textbox(label="Status (1,000)", show_label=False, interactive=False)
+                    stat_1000 = gr.Textbox(label="Status (1,000)", show_label=False, interactive=False, elem_classes=["result-status"])
                 with gr.Column():
                     out_10000 = gr.Textbox(label="10,000 Examples (High)", interactive=False)
-                    stat_10000 = gr.Textbox(label="Status (10,000)", show_label=False, interactive=False)
+                    stat_10000 = gr.Textbox(label="Status (10,000)", show_label=False, interactive=False, elem_classes=["result-status"])
 
             with gr.Accordion("Training Data Exposure", open=False):
                 coverage_box = gr.Markdown(
